@@ -1,24 +1,6 @@
 # ExMoSnake
 
-**TODO: Add description**
+A learning exercise to port over a simple multiplayer online snake game from Erlang to Elixir.
 
-## Installation
-
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed as:
-
-  1. Add `ex_mo_snake` to your list of dependencies in `mix.exs`:
-
-    ```elixir
-    def deps do
-      [{:ex_mo_snake, "~> 0.1.0"}]
-    end
-    ```
-
-  2. Ensure `ex_mo_snake` is started before your application:
-
-    ```elixir
-    def application do
-      [applications: [:ex_mo_snake]]
-    end
-    ```
+More information can be on [the original repo mo_snake](https://github.com/guess-burger/mo_snake).
 
