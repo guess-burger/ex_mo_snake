@@ -1,0 +1,2 @@
+defmodule ExMoSnake do
+end
