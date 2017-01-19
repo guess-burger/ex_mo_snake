@@ -15,7 +15,7 @@ defmodule ExMoSnake.Mixfile do
   # Type "mix help compile.app" for more information
   def application do
     [applications: [:logger, :cowboy],
-     mod: {:mo_snake_app, []}
+     mod: {ExMoSnake, []}
     ]
   end
 
