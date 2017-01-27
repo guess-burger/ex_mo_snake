@@ -1,10 +1,9 @@
 defmodule ExMoSnake.SnakeGame do
+  alias ExMoSnake.SnakeGame, as: Game
 
   @size 23
 
-  defmodule Game do
-    defstruct is_over: false, snake1: nil, snake2: nil, pellet: nil
-  end
+  defstruct is_over: false, snake1: nil, snake2: nil, pellet: nil
 
   defmodule Snake do
     defstruct id: nil, dir_press: :none, dir: "right", points: nil, colour: nil
@@ -51,6 +50,55 @@ defmodule ExMoSnake.SnakeGame do
         true -> %Game{ game | pellet: potential_pellet}
       end
    end
+
+
+  # FIXME be careful with this as I'm not sure if elixir will rebind the args in the function params
+  def set_dir(%Game{snake1: %Snake{id: snake_id} = snake1} = state, snake_id, dir) do
+    %Game{ state| snake1: %Snake{ snake1| dir_press: dir }};
+  end
+  def set_dir(%Game{snake2: %Snake{id: snake_id} = snake2} = state, snake_id, dir) do
+    %Game{ state| snake2: %Snake{snake2| dir_press: dir}}
+  end
+
+  def step(%Game{snake1: snake1, snake2: snake2, pellet: pellet} = game) do
+
+    # really need the pellets to be visible in the snake so that
+    # all is fair
+    # that means pellets need to be smaller than the snake blocks
+
+
+    {head1, crash_self1, %Snake{points: snake_q1}=snake1} = Snake.step_snake(snake1)
+    {head2, crash_self2, %Snake{points: snake_q2}=snake2} = Snake.step_snake(snake2)
+
+    game =
+      case pellet do
+        ^head1 ->
+          with_pellet = %Snake{snake1| points: :queue.in(Pellet, SnakeQ1)}
+          new_pellet(%Game{game| snake1: with_pellet, snake2: snake2})
+        ^head2 ->
+          with_pellet = %Snake{snake2| points: :queue.in(Pellet, SnakeQ2)}
+          new_pellet(%Game{game| snake1: snake1, snake2: with_pellet})
+        _ ->
+          %Game{game| snake1: snake1, snake2: snake2}
+      end
+
+    crash1 = :queue.member(head1, snake_q2)
+    crash2 = :queue.member(head2, snake_q1)
+
+    case {crash1 or crash_self1, crash2 or crash_self2} do
+      {true, true} ->
+        IO.puts "Draw #{:queue.to_list(snake_q1)} #{:queue.to_list(snake_q2)}"
+        %Game{game| is_over: {true, :draw}}
+      {true, false} ->
+        IO.puts "P2 Win"
+        %Game{game| is_over: {true, snake2.id}}
+      {false, true} ->
+        IO.puts "P1 Win"
+        %Game{game| is_over: {true, snake1.id}}
+      _no_crashes ->
+        game
+    end
+  end
 
 
   @draw_points BlockWrite.block_write('draw', 4, 8)
