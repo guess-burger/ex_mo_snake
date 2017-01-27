@@ -8,22 +8,54 @@ defmodule ExMoSnake.SnakeGame do
   defmodule Snake do
     defstruct id: nil, dir_press: :none, dir: "right", points: nil, colour: nil
 
-    def update_dir(%Snake{dir_press: :none} = state), do: state
-    def update_dir(%Snake{dir_press: "left", dir: old} = state) when old != "right" do
+    def step(snake) do
+      %Snake{points: points, dir: dir} = snake = update_dir(snake)
+      head = :queue.get_r(points)
+      head = newHead(head, dir)
+
+      moved = :queue.drop(points)
+      crash_self = :queue.member(head, moved)
+      snake = %Snake{snake| points: :queue.in(head, moved), dir_press: "none"}
+      {head, crash_self, snake}
+    end
+
+    defp update_dir(%Snake{dir_press: :none} = state) do
+      state
+    end
+    defp update_dir(%Snake{dir_press: "left", dir: old} = state) when old != "right" do
       %Snake{ state | dir: "left"}
     end
-    def update_dir(%Snake{dir_press: "right", dir: old} = state) when old != "left" do
+    defp update_dir(%Snake{dir_press: "right", dir: old} = state) when old != "left" do
       %Snake{ state | dir: "right"}
     end
-    def update_dir(%Snake{dir_press: "up", dir: old} = state) when old != "down" do
+    defp update_dir(%Snake{dir_press: "up", dir: old} = state) when old != "down" do
       %Snake{ state | dir: "up"}
     end
-    def update_dir(%Snake{dir_press: "down", dir: old} = state) when old != "up" do
+    defp update_dir(%Snake{dir_press: "down", dir: old} = state) when old != "up" do
       %Snake{ state | dir: "down"}
     end
-    def update_dir(state), do: state
+    defp update_dir(state) do
+      state
+    end
+
+    # FIXME there must be a better way of doing this! Just add then mod!
+    defp newHead({x, y}, "right"), do: {x + 1, y}
+    defp newHead({x, y}, "left"), do: {x - 1, y}
+    defp newHead({x, y}, "up"), do: Game.wrap_vert_point({x, y - 1})
+    defp newHead({x, y}, "down"), do: {x, y + 1}
 
   end
+
+  # FIXME stuck here since Snake can't access @size or any private functions of
+  # Game. Seems I need to call a public funtion. Maybe these are too tightly coupled
+  # and would be better off moving hte function back out of the snake module
+  defp wrap_hori_point(@size+1, y), do: {1, y}
+  defp wrap_hori_point(0, y), do: {@size, y}
+  defp wrap_hori_point(x, y), do: {x, y}
+
+  defp wrap_vert_point(x, @size+1), do: {x,1}
+  defp wrap_vert_point(x, 0), do: {x, @size}
+  defp wrap_vert_point(x, y), do: {x, y}
 
   def new(player1, player2) do
     p1_points = :queue.from_list([{1, 5}, {2, 5}, {3, 5}])
@@ -36,23 +68,23 @@ defmodule ExMoSnake.SnakeGame do
   end
 
   defp new_pellet(%Game{snake1: %Snake{points: snake1}, snake2:  %Snake{points: snake2}} = game) do
-      # FIXME this function could be better. Issues with it are:
-      # * players might take up the whole screen
-      # * if players take a lot of space this function might run for a while
-      potential_pellet = {:rand.uniform(@size), :rand.uniform(@size)}
+    # FIXME this function could be better. Issues with it are:
+    # * players might take up the whole screen
+    # * if players take a lot of space this function might run for a while
+    potential_pellet = {:rand.uniform(@size), :rand.uniform(@size)}
 
-      in_snake1? = :queue.member(potential_pellet, snake1)
-      in_snake2? = :queue.member(potential_pellet, snake2)
+    in_snake1? = :queue.member(potential_pellet, snake1)
+    in_snake2? = :queue.member(potential_pellet, snake2)
 
-      cond do
-        in_snake1? -> new_pellet(game)
-        in_snake2? -> new_pellet(game)
-        true -> %Game{ game | pellet: potential_pellet}
-      end
-   end
+    cond do
+      in_snake1? -> new_pellet(game)
+      in_snake2? -> new_pellet(game)
+      true -> %Game{ game | pellet: potential_pellet}
+    end
+  end
 
 
-  # FIXME be careful with this as I'm not sure if elixir will rebind the args in the function params
+  #FIXME be careful with this as I'm not sure if elixir will rebind the args in the function params
   def set_dir(%Game{snake1: %Snake{id: snake_id} = snake1} = state, snake_id, dir) do
     %Game{ state| snake1: %Snake{ snake1| dir_press: dir }};
   end
@@ -66,17 +98,16 @@ defmodule ExMoSnake.SnakeGame do
     # all is fair
     # that means pellets need to be smaller than the snake blocks
 
-
-    {head1, crash_self1, %Snake{points: snake_q1}=snake1} = Snake.step_snake(snake1)
-    {head2, crash_self2, %Snake{points: snake_q2}=snake2} = Snake.step_snake(snake2)
+    {head1, crash_self1, %Snake{points: snake_q1}=snake1} = Snake.step(snake1)
+    {head2, crash_self2, %Snake{points: snake_q2}=snake2} = Snake.step(snake2)
 
     game =
       case pellet do
         ^head1 ->
-          with_pellet = %Snake{snake1| points: :queue.in(Pellet, SnakeQ1)}
+          with_pellet = %Snake{snake1| points: :queue.in(pellet, snake_q1)}
           new_pellet(%Game{game| snake1: with_pellet, snake2: snake2})
         ^head2 ->
-          with_pellet = %Snake{snake2| points: :queue.in(Pellet, SnakeQ2)}
+          with_pellet = %Snake{snake2| points: :queue.in(pellet, snake_q2)}
           new_pellet(%Game{game| snake1: snake1, snake2: with_pellet})
         _ ->
           %Game{game| snake1: snake1, snake2: snake2}
