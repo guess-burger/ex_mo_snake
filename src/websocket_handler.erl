@@ -33,7 +33,7 @@ websocket_init(_Type, Req, _Opts) ->
 % Handles erlang messages
 websocket_info({update, Game}, Req, State) ->
   {reply, [
-    {text, multi_snake_game:to_json(Game)}
+    {text, 'Elixir.ExMoSnake.SnakeGame':to_json(Game)}
   ], Req, State};
 websocket_info({match_start, Match}, Req, State) ->
   Ref = monitor(process, Match),
@@ -51,10 +51,10 @@ websocket_info({gameover, Game}, Req, State) ->
   erlang:send_after(5000, self(), join_lobby),
   % FIXME this seems too leaky. websocket_handler shouldn't need to know how to interact with a game
   Json =
-    case multi_snake_game:result(Game,self()) of
-      draw -> multi_snake_game:draw_json(Game);
-      lose -> multi_snake_game:lose_json(Game);
-      win -> multi_snake_game:win_json(Game)
+    case 'Elixir.ExMoSnake.SnakeGame':result(Game,self()) of
+      draw -> 'Elixir.ExMoSnake.SnakeGame':draw_json(Game);
+      lose -> 'Elixir.ExMoSnake.SnakeGame':lose_json(Game);
+      win -> 'Elixir.ExMoSnake.SnakeGame':win_json(Game)
     end,
   {reply, {text, Json}, Req, State#state{match = undefined}};
 websocket_info(Msg, Req, State) ->

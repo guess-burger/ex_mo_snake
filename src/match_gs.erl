@@ -29,7 +29,7 @@
 -record(playing_state, {
   player1 :: pid(),
   player2 :: pid(),
-  game :: multi_snake_game:multi_snake_game(),
+  game :: 'Elixir.ExMoSnake.SnakeGame':'Elixir.ExMoSnake.SnakeGame'(),
   timer_ref :: reference()
 }).
 
@@ -69,20 +69,20 @@ handle_cast({player_left, PlayerPid}, State) ->
   GameOverState = player_left(PlayerPid, State),
   {stop, normal, GameOverState};
 handle_cast({move, Player, Direction}, #playing_state{ game = Game }=State) ->
-  Game2 = multi_snake_game:set_dir(Player, Direction, Game),
+  Game2 = 'Elixir.ExMoSnake.SnakeGame':set_dir(Game, Player, Direction),
   {noreply, State#playing_state{game = Game2}};
 handle_cast(_Request, State) ->
   {noreply, State}.
 
 
 handle_info(tick, #init_state{player1 = P1, player2 = P2}) ->
-  Game = multi_snake_game:new(P1,P2),
+  Game = 'Elixir.ExMoSnake.SnakeGame':new(P1,P2),
   {ok, TimeRef} = timer:send_interval(500, tick),
   io:format("Match start~n"),
   {noreply, #playing_state{player1=P1, player2 = P2, game = Game, timer_ref = TimeRef}};
 handle_info(tick, #playing_state{game = Game}=State) ->
-  UpdatedGame = multi_snake_game:step(Game),
-  case multi_snake_game:is_over(UpdatedGame) of
+  UpdatedGame = 'Elixir.ExMoSnake.SnakeGame':step(Game),
+  case 'Elixir.ExMoSnake.SnakeGame':is_over(UpdatedGame) of
     false ->
       State#playing_state.player1 ! {update, UpdatedGame},
       State#playing_state.player2 ! {update, UpdatedGame},
@@ -108,7 +108,7 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 
 player_left(PlayerPid, #init_state{player1 = P1, player2 = P2}=State) ->
-  player_left(P1, P2, PlayerPid, multi_snake_game:new(P1, P2)),
+  player_left(P1, P2, PlayerPid, 'Elixir.ExMoSnake.SnakeGame':new(P1, P2)),
   State;
 player_left(PlayerPid, #playing_state{player1 = P1, player2 = P2, game = Game}=State) ->
   player_left(P1, P2, PlayerPid, Game),
@@ -116,9 +116,9 @@ player_left(PlayerPid, #playing_state{player1 = P1, player2 = P2, game = Game}=S
 
 player_left(P1, P2, PlayerLeft, Game) when P1 == PlayerLeft->
   io:format("Player 1 ~p has left the match~n", [PlayerLeft]),
-  UpdatedGame = multi_snake_game:force_winner(P2, Game),
+  UpdatedGame = 'Elixir.ExMoSnake.SnakeGame':force_winner(P2, Game),
   P2 ! {gameover, UpdatedGame};
 player_left(P1, P2, PlayerLeft, Game) when P2 == PlayerLeft->
   io:format("Player 2 ~p has left the match~n", [PlayerLeft]),
-  UpdatedGame = multi_snake_game:force_winner(P1, Game),
+  UpdatedGame = 'Elixir.ExMoSnake.SnakeGame':force_winner(P1, Game),
   P1 ! {gameover, UpdatedGame}.

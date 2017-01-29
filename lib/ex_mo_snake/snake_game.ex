@@ -6,56 +6,8 @@ defmodule ExMoSnake.SnakeGame do
   defstruct is_over: false, snake1: nil, snake2: nil, pellet: nil
 
   defmodule Snake do
-    defstruct id: nil, dir_press: :none, dir: "right", points: nil, colour: nil
-
-    def step(snake) do
-      %Snake{points: points, dir: dir} = snake = update_dir(snake)
-      head = :queue.get_r(points)
-      head = newHead(head, dir)
-
-      moved = :queue.drop(points)
-      crash_self = :queue.member(head, moved)
-      snake = %Snake{snake| points: :queue.in(head, moved), dir_press: "none"}
-      {head, crash_self, snake}
-    end
-
-    defp update_dir(%Snake{dir_press: :none} = state) do
-      state
-    end
-    defp update_dir(%Snake{dir_press: "left", dir: old} = state) when old != "right" do
-      %Snake{ state | dir: "left"}
-    end
-    defp update_dir(%Snake{dir_press: "right", dir: old} = state) when old != "left" do
-      %Snake{ state | dir: "right"}
-    end
-    defp update_dir(%Snake{dir_press: "up", dir: old} = state) when old != "down" do
-      %Snake{ state | dir: "up"}
-    end
-    defp update_dir(%Snake{dir_press: "down", dir: old} = state) when old != "up" do
-      %Snake{ state | dir: "down"}
-    end
-    defp update_dir(state) do
-      state
-    end
-
-    # FIXME there must be a better way of doing this! Just add then mod!
-    defp newHead({x, y}, "right"), do: {x + 1, y}
-    defp newHead({x, y}, "left"), do: {x - 1, y}
-    defp newHead({x, y}, "up"), do: Game.wrap_vert_point({x, y - 1})
-    defp newHead({x, y}, "down"), do: {x, y + 1}
-
+    defstruct id: nil, dir_press: :none, dir: "Right", points: nil, colour: nil
   end
-
-  # FIXME stuck here since Snake can't access @size or any private functions of
-  # Game. Seems I need to call a public funtion. Maybe these are too tightly coupled
-  # and would be better off moving hte function back out of the snake module
-  defp wrap_hori_point(@size+1, y), do: {1, y}
-  defp wrap_hori_point(0, y), do: {@size, y}
-  defp wrap_hori_point(x, y), do: {x, y}
-
-  defp wrap_vert_point(x, @size+1), do: {x,1}
-  defp wrap_vert_point(x, 0), do: {x, @size}
-  defp wrap_vert_point(x, y), do: {x, y}
 
   def new(player1, player2) do
     p1_points = :queue.from_list([{1, 5}, {2, 5}, {3, 5}])
@@ -83,8 +35,52 @@ defmodule ExMoSnake.SnakeGame do
     end
   end
 
+  def step_snake(snake) do
+    %Snake{points: points, dir: dir} = snake = update_dir(snake)
+    head = :queue.get_r(points)
+    head = newHead(head, dir)
 
-  #FIXME be careful with this as I'm not sure if elixir will rebind the args in the function params
+    moved = :queue.drop(points)
+    crash_self = :queue.member(head, moved)
+    snake = %Snake{snake| points: :queue.in(head, moved), dir_press: "none"}
+    {head, crash_self, snake}
+  end
+
+  @up "Up"
+  @down "Down"
+  @left "Left"
+  @right "Right"
+  defp update_dir(%Snake{dir_press: :none} = state) do
+    state
+  end
+  defp update_dir(%Snake{dir_press: @left, dir: old} = state) when old != @right do
+    %Snake{ state | dir: @left}
+  end
+  defp update_dir(%Snake{dir_press: @right, dir: old} = state) when old != @left do
+    %Snake{ state | dir: @right}
+  end
+  defp update_dir(%Snake{dir_press: @up, dir: old} = state) when old != @down do
+    %Snake{ state | dir: @up}
+  end
+  defp update_dir(%Snake{dir_press: @down, dir: old} = state) when old != @up do
+    %Snake{ state | dir: @down}
+  end
+  defp update_dir(state) do
+    state
+  end
+
+  # FIXME there must be a better way of doing this! Just add then mod!
+  defp newHead({@size, y}, @right), do: {1, y}
+  defp newHead({x, y}, @right), do: {x + 1, y}
+  defp newHead({1, y}, @left), do: {@size, y}
+  defp newHead({x, y}, @left), do: {x - 1, y}
+  defp newHead({x, 1}, @up), do: {x, @size}
+  defp newHead({x, y}, @up), do: {x, y - 1}
+  defp newHead({x, @size}, @down), do: {x, 1}
+  defp newHead({x, y}, @down), do: {x, y + 1}
+
+
+  # FIXME be careful with this as I'm not sure if elixir will rebind the args in the function params
   def set_dir(%Game{snake1: %Snake{id: snake_id} = snake1} = state, snake_id, dir) do
     %Game{ state| snake1: %Snake{ snake1| dir_press: dir }};
   end
@@ -92,14 +88,15 @@ defmodule ExMoSnake.SnakeGame do
     %Game{ state| snake2: %Snake{snake2| dir_press: dir}}
   end
 
+
   def step(%Game{snake1: snake1, snake2: snake2, pellet: pellet} = game) do
 
     # really need the pellets to be visible in the snake so that
     # all is fair
     # that means pellets need to be smaller than the snake blocks
 
-    {head1, crash_self1, %Snake{points: snake_q1}=snake1} = Snake.step(snake1)
-    {head2, crash_self2, %Snake{points: snake_q2}=snake2} = Snake.step(snake2)
+    {head1, crash_self1, %Snake{points: snake_q1}=snake1} = step_snake(snake1)
+    {head2, crash_self2, %Snake{points: snake_q2}=snake2} = step_snake(snake2)
 
     game =
       case pellet do
@@ -118,7 +115,7 @@ defmodule ExMoSnake.SnakeGame do
 
     case {crash1 or crash_self1, crash2 or crash_self2} do
       {true, true} ->
-        IO.puts "Draw #{:queue.to_list(snake_q1)} #{:queue.to_list(snake_q2)}"
+        IO.puts "Draw #{inspect :queue.to_list(snake_q1)} #{inspect :queue.to_list(snake_q2)}"
         %Game{game| is_over: {true, :draw}}
       {true, false} ->
         IO.puts "P2 Win"
@@ -132,13 +129,52 @@ defmodule ExMoSnake.SnakeGame do
   end
 
 
-  @draw_points BlockWrite.block_write('draw', 4, 8)
-  def draw_points, do: @draw_points
+  def force_winner(winner, game), do: %Game{game| is_over: {true, winner}}
+
+  # TODO might be able to improve this in Elixir
+  def is_over(%Game{is_over: false}), do: false
+  def is_over(%Game{is_over: {true, _}}), do: true
+
+  def result(%Game{is_over: false}, _Player) do
+    :not_over
+  end
+  def result(%Game{is_over: {true, result}}, player) do
+    case result do
+      :draw -> :draw;
+      ^player -> :win;
+      _other_player -> :lose
+    end
+  end
+
+
+  def to_json(%Game{snake1: snake1, snake2: snake2, pellet: pellet}) do
+    pellet_json = make_snake(points_to_json([pellet]), "black")
+    json_snakes = [snake_to_json(snake1), snake_to_json(snake2), pellet_json]
+    :jsx.encode([{"snakes", json_snakes}])
+  end
+
+  defp snake_to_json(%Snake{points: points, colour: colour}) do
+    json_points = points_to_json(:queue.to_list(points))
+    make_snake(json_points, colour)
+  end
+
+  defp make_snake(points, colour), do: [{"points", points}, {"colour", colour}]
+
+  defp points_to_json(points), do: for {x, y} <- points, do: [{"x", x}, {"y", y}]
 
   @win_points BlockWrite.block_write('win!', 3, 8)
-  def win_points, do: @win_points
+  def win_json(game), do: end_blocks(game, @win_points)
 
   @lose_points BlockWrite.block_write('lose', 3, 8)
-  def lose_points, do: @lose_points
+  def lose_json(game), do: end_blocks(game, @lose_points)
+
+  @draw_points BlockWrite.block_write('draw', 4, 8)
+  def draw_json(game), do: end_blocks(game, @draw_points)
+
+  defp end_blocks(%Game{snake1: snake1, snake2: snake2}, text) do
+    text_snake = make_snake(points_to_json(text), "black")
+    json_snakes = [snake_to_json(snake1), snake_to_json(snake2)]
+    :jsx.encode([{"snakes", [text_snake | json_snakes]}])
+  end
 
 end
