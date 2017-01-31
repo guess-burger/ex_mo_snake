@@ -35,10 +35,10 @@ defmodule ExMoSnake.Lobby do
   end
 
 
-  def leave_lobby(user_pid, %Lobby{waiting: user_pid}=state) do
+  defp leave_lobby(user_pid, %Lobby{waiting: user_pid}=state) do
     %Lobby{state| waiting: :nil}
   end
-  def leave_lobby(user_pid, %Lobby{waiting: user_pid}=state) do
+  defp leave_lobby(user_pid, %Lobby{waiting: user_pid}=state) do
     state
   end
   
