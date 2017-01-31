@@ -9,7 +9,7 @@ start_link() ->
 
 init([]) ->
 	Procs = [
-		{lobby, {lobby, start_link, []}, permanent, 5000, worker, [lobby]}
+		{lobby, {'Elixir.ExMoSnake.Lobby', start_link, []}, permanent, 5000, worker, ['Elixir.ExMoSnake.Lobby']}
 	],
 
 	{ok, {{one_for_one, 1, 5}, Procs}}.

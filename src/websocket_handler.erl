@@ -26,7 +26,7 @@ init(_, _Req, _Opts) ->
 
 websocket_init(_Type, Req, _Opts) ->
   io:format("Websocket init~n"),
-  lobby:register(),
+  'Elixir.ExMoSnake.Lobby':register(),
   {ok, Req, #state{}}.
 
 
@@ -39,13 +39,13 @@ websocket_info({match_start, Match}, Req, State) ->
   Ref = monitor(process, Match),
   {ok, Req, State#state{match = Match, match_ref = Ref}};
 websocket_info(join_lobby, Req, State) ->
-  lobby:register(),
+  'Elixir.ExMoSnake.Lobby':register(),
   {ok, Req, State};
 websocket_info({'DOWN',MatchRef,_,Match,_}, Req, #state{match = Match, match_ref = MatchRef}=State) ->
   % this is the case where the match just crashes for whatever reason
   % we don' match on this when the match is over since the match becomes undefined not the pid!
   io:format("Match down~n"),
-  lobby:register(),
+  'Elixir.ExMoSnake.Lobby':register(),
   {ok, Req, State#state{match=undefined, match_ref = undefined}};
 websocket_info({gameover, Game}, Req, State) ->
   erlang:send_after(5000, self(), join_lobby),
@@ -75,7 +75,7 @@ websocket_handle(_Frame, Req, State) ->
 
 websocket_terminate(_Reason, _Req, #state{match = undefined}) ->
   % We're waiting in the lobby!
-  lobby:leave(self()),
+  'Elixir.ExMoSnake.Lobby':leave(self()),
   ok;
 websocket_terminate(_Reason, _Req, #state{match = Match}) ->
   io:format("Websocket terminated~n"),
