@@ -1,6 +1,7 @@
 defmodule ExMoSnake.Lobby do
   use GenServer
   alias __MODULE__
+  alias ExMoSnake.Match
 
   defstruct waiting: nil, games: []
 
@@ -26,8 +27,8 @@ defmodule ExMoSnake.Lobby do
     {:noreply, %Lobby{state| waiting: player1}}
   end
   def handle_cast({:register, player2}, %Lobby{waiting: player1, games: games}=state) do
-    {:ok, game} = :match_gs.start(player1, player2)
-    IO.puts "Player2 registered #{inspect player2}; starting match #{inspect state}"
+    {:ok, game} = Match.start(player1, player2)
+    IO.puts "Player2 registered #{inspect player2}; starting match #{inspect game}"
     {:noreply, %Lobby{state| waiting: :nil, games: [game | games]}}
   end
   def handle_cast({:leave_lobby, user_pid}, state) do

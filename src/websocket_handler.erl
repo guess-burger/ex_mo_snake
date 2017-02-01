@@ -66,7 +66,7 @@ websocket_info(Msg, Req, State) ->
 websocket_handle({text, Msg}, Req, #state{ match = GamePid }=State) when GamePid =/= undefined->
   NewMove = jsx:decode(Msg),
   io:format("Got msg: ~p~n",[NewMove]),
-  match_gs:move(NewMove,GamePid),
+  'Elixir.ExMoSnake.Match':move(NewMove,GamePid),
   {ok, Req, State};
 websocket_handle(_Frame, Req, State) ->
   {ok, Req, State}.
@@ -79,7 +79,7 @@ websocket_terminate(_Reason, _Req, #state{match = undefined}) ->
   ok;
 websocket_terminate(_Reason, _Req, #state{match = Match}) ->
   io:format("Websocket terminated~n"),
-  match_gs:leave(Match),
+  'Elixir.ExMoSnake.Match':leave(Match),
   ok.
 
 
