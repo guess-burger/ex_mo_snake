@@ -7,7 +7,7 @@ defmodule ExMoSnake do
             {:_, [
               {'/', :cowboy_static, {:file, 'priv/static/index.html'}},
               {'/resources/[...]', :cowboy_static, {:priv_dir, ExMoSnake, 'static'}},
-              {'/echo', :websocket_handler, []}
+              {'/echo', ExMoSnake.Websocket, []}
             ]}
         ])
         # Name, NbAcceptors, TransOpts, ProtoOpts

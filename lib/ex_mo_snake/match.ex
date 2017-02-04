@@ -70,12 +70,12 @@ defmodule ExMoSnake.Match do
   end
 
   defp player_left(p1, p2, player_left, game) when p1 == player_left do
-    IO.puts "Player 1 #{player_left} has left the match"
+    IO.puts "Player 1 #{inspect player_left} has left the match"
     game = SnakeGame.force_winner(p2, game)
     send(p2, {:gameover, game})
   end
   defp player_left(p1, p2, player_left, game) when p2 == player_left do
-    IO.puts "Player 2 #{player_left} has left the match"
+    IO.puts "Player 2 #{inspect player_left} has left the match"
     game = SnakeGame.force_winner(p1, game)
     send(p1, {:gameover, game})
   end
