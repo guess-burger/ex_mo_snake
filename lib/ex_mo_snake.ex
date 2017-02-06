@@ -1,7 +1,7 @@
 defmodule ExMoSnake do
 
     def start(_type, _args) do
-        {:ok, _} = :mo_snake_sup.start_link()
+        {:ok, _} = ExMoSnake.Supervisor.start_link()
         dispatch = :cowboy_router.compile([
             # {HostMatch, list({PathMatch, Handler, Opts})}
             {:_, [
