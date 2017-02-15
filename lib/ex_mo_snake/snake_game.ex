@@ -6,7 +6,12 @@ defmodule ExMoSnake.SnakeGame do
   defstruct is_over: false, snake1: nil, snake2: nil, pellet: nil
 
   defmodule Snake do
-    defstruct id: nil, dir_press: :none, dir: "Right", points: nil, colour: nil
+    @up "Up"
+    @down "Down"
+    @left "Left"
+    @right "Right"
+
+    defstruct id: nil, dir_press: :none, dir: @right, points: nil, colour: nil
 
     def step(snake, size) do
       %Snake{points: points, dir: dir} = snake = update_dir(snake)
@@ -19,10 +24,7 @@ defmodule ExMoSnake.SnakeGame do
       {head, crash_self, snake}
       end
 
-    @up "Up"
-    @down "Down"
-    @left "Left"
-    @right "Right"
+
 
     defp update_dir(%Snake{dir_press: :none} = snake) do
       snake
@@ -131,9 +133,10 @@ defmodule ExMoSnake.SnakeGame do
 
   def force_winner(winner, game), do: %Game{game| is_over: {true, winner}}
 
-  # TODO might be able to improve this in Elixir
+
   def is_over(%Game{is_over: false}), do: false
   def is_over(%Game{is_over: {true, _}}), do: true
+
 
   def result(%Game{is_over: false}, _Player) do
     :not_over
@@ -162,7 +165,7 @@ defmodule ExMoSnake.SnakeGame do
 
   defp points_to_json(points), do: for {x, y} <- points, do: [{"x", x}, {"y", y}]
 
-  @win_points BlockWrite.block_write('win!', 3, 8)
+  @win_points BlockWrite.block_write('win!', 4, 8)
   def win_json(game), do: end_blocks(game, @win_points)
 
   @lose_points BlockWrite.block_write('lose', 3, 8)

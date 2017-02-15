@@ -20,7 +20,6 @@ defmodule BlockWrite do
   end
 
   # Thanks to http://www.dafont.com/pixeltext.font?text=Win+Lose+Draw
-  # FIXME these should probs be index by 0 and also in the shape of the letter
   defp letter(?a)  do
       {3,[
         {1, 5}, {1, 4}, {1, 3}, {1, 2},
@@ -57,19 +56,21 @@ defmodule BlockWrite do
     ]}
   end
   defp letter(?n)  do
-    {5,[
-      {1, 1}, {1, 2}, {1, 3}, {1, 4}, {1, 5},
-      {2, 2},
-      {3, 3},
-      {4, 4},
-      {5, 1}, {5, 2}, {5, 3}, {5, 4}, {5, 5},
+    {3,[
+      {1, 1}, {2, 1},
+      {1, 2},         {3, 2},
+      {1, 3},         {3, 3},
+      {1, 4},         {3, 4},
+      {1, 5},         {3, 5},
     ]}
   end
   defp letter(?o)  do
     {3,[
-      {1, 4}, {1, 3}, {1, 2},
-      {2, 5}, {2, 1},
-      {3, 4}, {3, 3}, {3, 2},
+              {2, 5},
+      {1, 4},         {3, 4},
+      {1, 3},         {3, 3},
+      {1, 2},         {3, 2},
+              {2, 1},
     ]}
   end
   defp letter(?r)  do
