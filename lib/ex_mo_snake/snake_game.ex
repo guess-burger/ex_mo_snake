@@ -7,6 +7,51 @@ defmodule ExMoSnake.SnakeGame do
 
   defmodule Snake do
     defstruct id: nil, dir_press: :none, dir: "Right", points: nil, colour: nil
+
+    def step(snake, size) do
+      %Snake{points: points, dir: dir} = snake = update_dir(snake)
+      head = :queue.get_r(points)
+      head = newHead(head, dir, size)
+
+      moved = :queue.drop(points)
+      crash_self = :queue.member(head, moved)
+      snake = %Snake{snake| points: :queue.in(head, moved), dir_press: "none"}
+      {head, crash_self, snake}
+      end
+
+    @up "Up"
+    @down "Down"
+    @left "Left"
+    @right "Right"
+
+    defp update_dir(%Snake{dir_press: :none} = snake) do
+      snake
+    end
+    defp update_dir(%Snake{dir_press: @left, dir: old} = snake) when old != @right do
+      %Snake{ snake | dir: @left}
+    end
+    defp update_dir(%Snake{dir_press: @right, dir: old} = snake) when old != @left do
+      %Snake{ snake | dir: @right}
+    end
+    defp update_dir(%Snake{dir_press: @up, dir: old} = snake) when old != @down do
+      %Snake{ snake | dir: @up}
+    end
+    defp update_dir(%Snake{dir_press: @down, dir: old} = snake) when old != @up do
+      %Snake{ snake | dir: @down}
+    end
+    defp update_dir(snake) do
+      snake
+    end
+
+    # FIXME there must be a better way of doing this! Just add then mod!
+    defp newHead({size, y}, @right, size), do: {1, y}
+    defp newHead({x, y}, @right, _size), do: {x + 1, y}
+    defp newHead({1, y}, @left, size), do: {size, y}
+    defp newHead({x, y}, @left, _size), do: {x - 1, y}
+    defp newHead({x, 1}, @up, size), do: {x, size}
+    defp newHead({x, y}, @up, _size), do: {x, y - 1}
+    defp newHead({x, size}, @down, size), do: {x, 1}
+    defp newHead({x, y}, @down, _size), do: {x, y + 1}
   end
 
   def new(player1, player2) do
@@ -35,52 +80,7 @@ defmodule ExMoSnake.SnakeGame do
     end
   end
 
-  def step_snake(snake) do
-    %Snake{points: points, dir: dir} = snake = update_dir(snake)
-    head = :queue.get_r(points)
-    head = newHead(head, dir)
 
-    moved = :queue.drop(points)
-    crash_self = :queue.member(head, moved)
-    snake = %Snake{snake| points: :queue.in(head, moved), dir_press: "none"}
-    {head, crash_self, snake}
-  end
-
-  @up "Up"
-  @down "Down"
-  @left "Left"
-  @right "Right"
-  defp update_dir(%Snake{dir_press: :none} = state) do
-    state
-  end
-  defp update_dir(%Snake{dir_press: @left, dir: old} = state) when old != @right do
-    %Snake{ state | dir: @left}
-  end
-  defp update_dir(%Snake{dir_press: @right, dir: old} = state) when old != @left do
-    %Snake{ state | dir: @right}
-  end
-  defp update_dir(%Snake{dir_press: @up, dir: old} = state) when old != @down do
-    %Snake{ state | dir: @up}
-  end
-  defp update_dir(%Snake{dir_press: @down, dir: old} = state) when old != @up do
-    %Snake{ state | dir: @down}
-  end
-  defp update_dir(state) do
-    state
-  end
-
-  # FIXME there must be a better way of doing this! Just add then mod!
-  defp newHead({@size, y}, @right), do: {1, y}
-  defp newHead({x, y}, @right), do: {x + 1, y}
-  defp newHead({1, y}, @left), do: {@size, y}
-  defp newHead({x, y}, @left), do: {x - 1, y}
-  defp newHead({x, 1}, @up), do: {x, @size}
-  defp newHead({x, y}, @up), do: {x, y - 1}
-  defp newHead({x, @size}, @down), do: {x, 1}
-  defp newHead({x, y}, @down), do: {x, y + 1}
-
-
-  # FIXME be careful with this as I'm not sure if elixir will rebind the args in the function params
   def set_dir(%Game{snake1: %Snake{id: snake_id} = snake1} = state, snake_id, dir) do
     %Game{ state| snake1: %Snake{ snake1| dir_press: dir }};
   end
@@ -95,8 +95,8 @@ defmodule ExMoSnake.SnakeGame do
     # all is fair
     # that means pellets need to be smaller than the snake blocks
 
-    {head1, crash_self1, %Snake{points: snake_q1}=snake1} = step_snake(snake1)
-    {head2, crash_self2, %Snake{points: snake_q2}=snake2} = step_snake(snake2)
+    {head1, crash_self1, %Snake{points: snake_q1}=snake1} = Snake.step(snake1, @size)
+    {head2, crash_self2, %Snake{points: snake_q2}=snake2} = Snake.step(snake2, @size)
 
     game =
       case pellet do
